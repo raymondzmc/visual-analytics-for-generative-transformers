@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+{% macro table(content, headings) %}
+    <table class="table table-hover">
+      <thead class="thead-dark">
+        <tr>
+            {% for header in headings %}
+            <th scope="col">{{ header }}</th>
+            {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in content %}
+        <tr class="content" id="content-{{ row['idx'] }}">
+            {% for header in headings %}
+                <td>{{ row[header] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% endmacro %}
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Visualization Analytics for Fine-tuning Pre-trained Transformers</title>
+<!--     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-nice-select/1.1.0/js/jquery.nice-select.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js" integrity="sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script> -->
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename="css/style.css") }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename="css/loader.css") }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename="css/vanillaSelectBox.css") }}">
+
+</head>
+
+<body>
+    <div class="loading" id="loader">Loading&#8230;</div>
+    <div class="container-fluid">
+
+        <!-- Top banner -->
+        <div class="row" id="banner"> 
+            <div class="col-8" id="title"> 
+                <h1> Visual Analytics for Generative Transformers</h1>
+            </div>
+            <div class="col-4" id="icons">
+                <a class="btn btn-primary input-block-level" role="button" href="https://www.overleaf.com/2812517959qqmkrswgzcsv">
+                    <span class="fas fa-file-pdf fa-3x"></span>
+                </a>
+                <a class="btn btn-primary input-block-level" role="button">
+                    <span class="fab fa-youtube fa-3x"></span>
+                </a>
+                <a class="btn btn-primary input-block-level" role="button" href="https://github.com/raymondzmc/visual-analytics-finetuning-pretrained-transformers">
+                    <span class="fab fa-github fa-3x"></span>
+                </a>
+            </div>
+        </div>
+
+                                                <!-- Modal -->
+                                                <div class="modal fade modal-centered" id="projModal" tabindex="-1" role="dialog" aria-labelledby="projModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="exampleModalLabel">Customize Projection Parameters</h5>
+                                                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="row">
+                                                                <div class="tabs active" id="umap">
+                                                                    <h6 class="font-weight-bold">UMAP</h6>
+                                                                </div>
+                                                                <div class="tabs" id="tsne">
+                                                                    <h6 class="text-muted">T-SNE</h6>
+                                                                </div>
+                                                                </div>
+                                                                <fieldset class="show" id="umap-tab">
+                                                                    <div class="bg-light" style="padding-top: 10px">
+                                                                        <form>
+                                                                            <div class="form-group pb-2 px-3">
+                                                                                <input type="text" placeholder="n_neighbors" id="n_neighbors" class="form-control">
+                                                                            </div>
+                                                                            <div class="form-group pb-2 px-3">
+                                                                                <input type="text" placeholder="min_dist" id="min_dist" class="form-control">
+                                                                            </div>
+                                                                            <div class="form-group pb-2 px-3">
+                                                                                <input type="text" placeholder="umap_n_components" id="umap_n_components" class="form-control">
+                                                                            </div>
+                                                                            <div class="form-group pb-2 px-3 row">
+                                                                                <div class="col-3 align-self-center">
+                                                                                <label for="umap_select-metric">&nbsp metric: &nbsp</label>
+                                                                                </div>
+                                                                                <div class="col-9 align-self-center">
+                                                                                <select class="select" id="umap_select-metric" style="width: 50%">
+                                                                                    <option>euclidean</option>
+                                                                                    <option>minkowski</option>
+                                                                                    <option>cosine</option>
+                                                                                </select>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="form-group pb-2 row justify-content-center">
+                                                                                <button type="button" class="btn btn-primary btn-sm" style="margin-top: 20px" id="reloadUMAP">
+                                                                                    Reload Projection
+                                                                                </button>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                </fieldset>
+                                                                <fieldset id="tsne-tab">
+                                                                    <div class="bg-light" style="padding-top: 10px">
+                                                                        <form>
+                                                                            <div class="form-group pb-2 px-3">
+                                                                                <input type="text" placeholder="tsne_n_components" id="tsne_n_components" class="form-control">
+                                                                            </div>
+                                                                            <div class="form-group pb-2 px-3">
+                                                                                <input type="text" placeholder="perplexity" id="perplexity" class="form-control">
+                                                                            </div>
+                                                                            <div class="form-group pb-2 px-3 row">
+                                                                                <div class="col-3 align-self-center">
+                                                                                <label for="tsne_select-metric">&nbsp metric: &nbsp</label>
+                                                                                </div>
+                                                                                <div class="col-9 align-self-center">
+                                                                                <select class="select" id="tsne_select-metric" style="width: 50%">
+                                                                                    <option>euclidean</option>
+                                                                                    <option>minkowski</option>
+                                                                                    <option>cosine</option>
+                                                                                </select>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="form-group pb-2 row" style="margin-top: 20px">
+                                                                                <button type="button" class="btn btn-primary btn-sm" id="reloadTSNE">
+                                                                                    Reload Projection
+                                                                                </button>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                </fieldset>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+        <!-- Main visualization -->
+        <div class="row flex-row flex-nowrap overflow-auto align-items-stretch justify-content-evenly vis-row">
+            <!-- Projection View -->
+            <div class="card col-6">
+                <div class="card-header">
+                    <h2> Hidden State Projection </h2>
+                </div>
+                <div class="card-block">
+
+                    <div class="row" id="projection-options">
+
+                        <div class="col-2">
+                            <div class="card-input input-group">
+                                <button id="resetZoom" type="button" class="btn btn-primary">Reset Zoom</button>
+                            </div>
+                            <div class="card-input input-group">
+                                <button id="resetProjection" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#projModal">
+                                    Customize Projection Method
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-2">
+                            <div class="card-input input-group">
+                                <button id="projectionMode" type="button" value="encoder" class="btn btn-primary" style="display: none;"></button>
+                            </div>
+                        </div>
+                    </div>                   
+                    
+                    <div class="row justify-content-md-center" id="slider-container">
+                        <div class="col-lg-6" id="filter">
+                            <div class="card-input input-group">
+                                <div class="input-group-text">Select Attribute:</div>
+                                <select class="form-select" id="color-select">
+                                    <option selected value="none"> None </option>
+                                </select>
+                                <div class="range-slider" id="range-slider" style="display: none;"></div>
+                                <div class="input-group-text" id="range-value" style="display: none;">0-0</div>
+                                <select class="categorical-select" id="categorical-select" multiple style="display: none;">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row svg-container justify-content-md-center" id="projectionView"></div>
+                </div>
+            </div>
+            <div class="card col-3">
+                <div class="card-header">
+                    <h2>Encoder Attention Heads</h2>
+                </div>
+                <div class="row" value="encoder" id="encoderAttentionView"></div>
+            </div>
+            <div class="card col-3">
+                <div class="card-header">
+                    <h2>Decoder Attention Heads</h2>
+                </div>
+                <div class="row" value="decoder" id="decoderAttentionView"></div>
+            </div>
+        </div>
+
+        
+        <div class="row flex-nowrap overflow-auto inline-block align-items-center vis-row">
+            <!-- Attention View -->
+            
+
+            <!-- Instance View -->
+            <div class="card col-12">
+                <div class="card-header">
+                    <h2> Instance View </h2>
+                </div>
+                <div class="card-block">
+                    <div class="row">
+                        <div class="col-7">
+                            <div class="btn-group card-input" role="group" id="interpretation-select">
+                                <div class="input-group-text">Interpretation Method</div>
+                                <input type="radio" class="btn-check" value="attention" name="interpretation" id="interpret-attention" autocomplete="off" checked="true" />
+                                <label class="btn btn-outline-primary" for="interpret-attention">Attention</label>
+
+                                <input type="radio" class="btn-check" value="attribution" name="interpretation" id="interpret-attribution"  autocomplete="off"/>
+                                <label class="btn btn-outline-primary" for="interpret-attribution">Attribution</label>
+
+<!--                                 <input type="radio" class="btn-check" value="lrp" name="interpretation" id="interpLrp" autocomplete="off"/>
+                                <label class="btn btn-outline-primary" for="interpLrp">LRP</label> -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row align-items-center" >
+                        <div class="col-12" id="instanceView">
+                            <div class="card instance-card overflow-auto">
+                                <h5 class="card-title" id="input-container-title"></h5>
+                                <ul class="token-container" id="input-token-container"></ul>
+                                <h5 class="card-title" id="output-container-title"></h5>
+                                <ul class="token-container" id="output-token-container"></ul>
+                                <ul class="list-group list-group-flush" id="instance-metadata-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.12.0/underscore-min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.5.0/d3.min.js" integrity="sha512-0XfwGD1nxplHpehcSVI7lY+m/5L37PNHDt+DOc7aLFckwPXjnjeA1oeNbru7YeI4VLs9i+ADnnHEhP69C9CqTA==" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+<script type="module" src="{{ url_for('static', filename="js/index.js") }}"></script>
+<script src="{{ url_for('static', filename="js/vanillaSelectBox.js") }}"></script>
+
+</body>
+</html>
